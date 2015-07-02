@@ -1,6 +1,8 @@
 Library/
 ProjectSettings/
 Temp/
+Build/TankWar_Data/
+*.exe
 *.csproj
 *.sln
 TankWar.userprefs
