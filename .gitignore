@@ -1,0 +1,6 @@
+Library/
+ProjectSettings/
+Temp/
+*.csproj
+*.sln
+TankWar.userprefs
