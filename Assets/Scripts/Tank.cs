@@ -17,15 +17,20 @@ public class Tank : MonoBehaviour
 	public Transform muzzle;
 	public Transform head;
 	public Bullet bullet;
+	public int team;
+
+	public int health;
 
 	private MovingState movingForward = MovingState.None;
 	private MovingState turnBodyRight = MovingState.None;
 	private MovingState turnHeadRight = MovingState.Negative;
 
 	private Rigidbody body;
+	private Animator anim;
 
 	private float fireTime;
 	private bool canFire;
+	private bool isDead;
 
 	public void MoveForward(MovingState state)
 	{
@@ -44,22 +49,49 @@ public class Tank : MonoBehaviour
 
 	public void Fire()
 	{
-		if (this.canFire) 
+		if (!this.isDead && this.canFire) 
 		{
-			Instantiate(this.bullet, this.muzzle.position, this.muzzle.rotation);
+			var bullet = Instantiate(this.bullet, this.muzzle.position, this.muzzle.rotation) as Bullet;
+			bullet.SetOwner(this);
+
 			this.canFire = false;
 			Invoke("CanFire", this.fireDelay);
 		}
 	}
 
+	public void Hit(int damage)
+	{
+		this.health -= damage;
+
+		if (this.health <= 0) 
+		{
+			this.Die();
+		}
+	}
+
+	public void RemoveItself()
+	{
+		Destroy(this.gameObject);
+	}
+
 	void Start () 
 	{
 		this.body = this.GetComponent<Rigidbody>();
+		this.anim = this.GetComponent<Animator>();
+
 		this.canFire = true;
+		this.isDead = false;
+
+		GameManager.AddTank(this);
 	}
 	
 	void FixedUpdate () 
 	{
+		if (this.isDead) 
+		{
+			return;
+		}
+
 		var deltaMove = (float) this.movingForward * this.movingSpeed * this.transform.forward * Time.deltaTime;
 		this.body.MovePosition(this.body.position + deltaMove);
 		
@@ -68,6 +100,31 @@ public class Tank : MonoBehaviour
 
 		var deltaHeadRotation = -(float)this.turnHeadRight * this.headAngularSpeed * this.transform.up * Time.deltaTime;
 		this.head.Rotate(deltaHeadRotation);
+	}
+	
+	public static MovingState NumberToMovingState(float number)
+	{
+		return number > 0 
+			? MovingState.Positive
+				: number < 0 
+				? MovingState.Negative
+				: MovingState.None;
+	}
+	
+	public static MovingState BoolToMovingState(bool positive, bool nagative)
+	{
+		return positive
+			? MovingState.Positive
+				: nagative
+				? MovingState.Negative
+				: MovingState.None;
+	}
+
+	private void Die()
+	{
+		this.isDead = true;
+		this.anim.SetTrigger("Destory");
+		GameManager.RemoveTank(this);
 	}
 	
 	private void CanFire()
